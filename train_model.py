@@ -50,7 +50,8 @@ text_transformer = Pipeline([
 preprocessor = ColumnTransformer([
     ('num', numeric_transformer, numeric_features),
     ('cat', categorical_transformer, categorical_features),
-    ('text', text_transformer, text_feature)
+    ('text', text_transformer, [text_feature])
+
 ])
 
 # ----------------------------
