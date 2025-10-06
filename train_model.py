@@ -4,6 +4,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import pandas as pd, numpy as np
+from pathlib import Path
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -12,8 +13,8 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
+from sklearn.preprocessing import FunctionTransformer
 import joblib
-from pathlib import Path
 
 # ----------------------------
 # Step 1: Load dataset
