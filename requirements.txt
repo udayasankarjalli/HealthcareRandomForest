@@ -1,0 +1,9 @@
+pandas
+numpy
+scikit-learn
+joblib
+gradio==5.47.0
+fastapi
+uvicorn
+pydantic
+starlette
