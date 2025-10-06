@@ -44,6 +44,7 @@ categorical_transformer = Pipeline([
 text_feature = 'symptoms_text'
 text_transformer = Pipeline([
     ('imputer', SimpleImputer(strategy='constant', fill_value='')),
+    ('flatten', FunctionTransformer(lambda x: x.ravel(), validate=False)),  # ✅ fix here
     ('tfidf', TfidfVectorizer(ngram_range=(1,2), max_df=0.95))
 ])
 
@@ -51,16 +52,17 @@ preprocessor = ColumnTransformer([
     ('num', numeric_transformer, numeric_features),
     ('cat', categorical_transformer, categorical_features),
     ('text', text_transformer, [text_feature])
-
 ])
 
 # ----------------------------
 # Step 4: Model Pipeline
 # ----------------------------
+
 pipe = Pipeline([
     ('preprocessor', preprocessor),
     ('clf', RandomForestClassifier(n_estimators=300, random_state=42, n_jobs=-1))
 ])
+
 
 # ----------------------------
 # Step 5: Train & Evaluate
