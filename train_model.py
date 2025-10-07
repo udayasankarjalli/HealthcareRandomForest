@@ -9,11 +9,10 @@ from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, FunctionTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
-from sklearn.preprocessing import FunctionTransformer
 import joblib
 
 # ----------------------------
@@ -29,10 +28,16 @@ features = ['symptoms_text', 'duration_days_reported', 'severity_level']
 target = 'disease_label'
 
 train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df[target])
+print("Train:", train_df.shape, " Test:", test_df.shape)
 
 # ----------------------------
 # Step 3: Preprocessing setup
 # ----------------------------
+
+# Function to flatten text column safely for TF-IDF
+def flatten_text(x):
+    return x.ravel()
+
 numeric_features = ['duration_days_reported']
 numeric_transformer = SimpleImputer(strategy='median')
 
@@ -45,43 +50,51 @@ categorical_transformer = Pipeline([
 text_feature = 'symptoms_text'
 text_transformer = Pipeline([
     ('imputer', SimpleImputer(strategy='constant', fill_value='')),
-    ('flatten', FunctionTransformer(lambda x: x.ravel(), validate=False)),  # ✅ fix here
+    ('flatten', FunctionTransformer(flatten_text, validate=False)),  # ✅ replaced lambda
     ('tfidf', TfidfVectorizer(ngram_range=(1,2), max_df=0.95))
 ])
 
+# Combine preprocessing
 preprocessor = ColumnTransformer([
     ('num', numeric_transformer, numeric_features),
     ('cat', categorical_transformer, categorical_features),
-    ('text', text_transformer, [text_feature])
+    ('text', text_transformer, [text_feature])  # ✅ use list to avoid Series input
 ])
 
 # ----------------------------
 # Step 4: Model Pipeline
 # ----------------------------
-
 pipe = Pipeline([
     ('preprocessor', preprocessor),
     ('clf', RandomForestClassifier(n_estimators=300, random_state=42, n_jobs=-1))
 ])
-
 
 # ----------------------------
 # Step 5: Train & Evaluate
 # ----------------------------
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 scores = cross_val_score(pipe, train_df[features], train_df[target], cv=cv, scoring='accuracy', n_jobs=-1)
-print(f"CV accuracy (mean±std): {scores.mean():.4f} ± {scores.std():.4f}")
+print(f"\nCV accuracy (mean ± std): {scores.mean():.4f} ± {scores.std():.4f}")
 
 pipe.fit(train_df[features], train_df[target])
 preds = pipe.predict(test_df[features])
-print("Test accuracy:", accuracy_score(test_df[target], preds))
+print("\nTest accuracy:", accuracy_score(test_df[target], preds))
 print("\nClassification report:\n", classification_report(test_df[target], preds))
 
 # ----------------------------
 # Step 6: Save model artifacts
 # ----------------------------
 Path("model").mkdir(exist_ok=True)
-joblib.dump(pipe, "model/healthcare_model.joblib")
-train_df.to_csv("model/train_data.csv", index=False)
-test_df.to_csv("model/test_data.csv", index=False)
-print("✅ Model and data saved successfully.")
+
+model_path = "model/healthcare_model.joblib"
+train_path = "model/train_data.csv"
+test_path = "model/test_data.csv"
+
+joblib.dump(pipe, model_path)
+train_df.to_csv(train_path, index=False)
+test_df.to_csv(test_path, index=False)
+
+print("\n✅ Model and data saved successfully:")
+print(f"   Model  → {model_path}")
+print(f"   Train  → {train_path}")
+print(f"   Test   → {test_path}")
