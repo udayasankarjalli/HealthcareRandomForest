@@ -1,5 +1,3 @@
-# train_model.py
-
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -14,6 +12,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
 import joblib
+import os
+from huggingface_hub import HfApi
 
 # ----------------------------
 # Step 1: Load dataset
@@ -34,7 +34,6 @@ print("Train:", train_df.shape, " Test:", test_df.shape)
 # Step 3: Preprocessing setup
 # ----------------------------
 
-# Function to flatten text column safely for TF-IDF
 def flatten_text(x):
     return x.ravel()
 
@@ -50,15 +49,14 @@ categorical_transformer = Pipeline([
 text_feature = 'symptoms_text'
 text_transformer = Pipeline([
     ('imputer', SimpleImputer(strategy='constant', fill_value='')),
-    ('flatten', FunctionTransformer(flatten_text, validate=False)),  # ✅ replaced lambda
+    ('flatten', FunctionTransformer(flatten_text, validate=False)),
     ('tfidf', TfidfVectorizer(ngram_range=(1,2), max_df=0.95))
 ])
 
-# Combine preprocessing
 preprocessor = ColumnTransformer([
     ('num', numeric_transformer, numeric_features),
     ('cat', categorical_transformer, categorical_features),
-    ('text', text_transformer, [text_feature])  # ✅ use list to avoid Series input
+    ('text', text_transformer, [text_feature])
 ])
 
 # ----------------------------
@@ -98,3 +96,29 @@ print("\n✅ Model and data saved successfully:")
 print(f"   Model  → {model_path}")
 print(f"   Train  → {train_path}")
 print(f"   Test   → {test_path}")
+
+# ----------------------------
+# Step 7: Upload model to Hugging Face Hub
+# ----------------------------
+HF_TOKEN = os.environ.get("HF_TOKEN")  # GitHub Action secret
+REPO_ID = "udaysankarjalli/healthcare-disease-predictor-model"  # separate repo for large model files
+
+if HF_TOKEN:
+    api = HfApi()
+    # Upload model
+    api.upload_file(path_or_fileobj=model_path,
+                    path_in_repo="healthcare_model.joblib",
+                    repo_id=REPO_ID,
+                    token=HF_TOKEN)
+    # Upload train/test CSVs (optional)
+    api.upload_file(path_or_fileobj=train_path,
+                    path_in_repo="train_data.csv",
+                    repo_id=REPO_ID,
+                    token=HF_TOKEN)
+    api.upload_file(path_or_fileobj=test_path,
+                    path_in_repo="test_data.csv",
+                    repo_id=REPO_ID,
+                    token=HF_TOKEN)
+    print("✅ Model and data uploaded successfully to Hugging Face Hub!")
+else:
+    print("⚠️ HF_TOKEN not found. Skipping upload.")
