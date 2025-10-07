@@ -5,7 +5,7 @@ import numpy as np
 import os
 from huggingface_hub import hf_hub_download
 
-# ----------------------------
+# -----------------------------
 # Step 1: Download model from Hugging Face Hub
 # ----------------------------
 HF_TOKEN = os.environ.get("HF_TOKEN")  # GitHub Actions or Space secret
