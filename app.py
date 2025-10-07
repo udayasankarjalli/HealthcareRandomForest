@@ -6,9 +6,15 @@ import os
 from huggingface_hub import hf_hub_download
 
 # -----------------------------
+# Step 0: Define custom function used in pipeline
+# -----------------------------
+def flatten_text(x):
+    return x.ravel()
+
+# -----------------------------
 # Step 1: Download model from Hugging Face Hub
-# ----------------------------
-HF_TOKEN = os.environ.get("github_actions_deploy_healthcare")# GitHub Actions or Space secret
+# -----------------------------
+HF_TOKEN = os.environ.get("github_actions_deploy_healthcare")  # HF Space secret
 REPO_ID = "udaysankarjalli/healthcare-disease-predictor-model"
 MODEL_FILENAME = "healthcare_model.joblib"
 
@@ -22,12 +28,14 @@ try:
 except Exception as e:
     raise FileNotFoundError(f"Failed to download model from HF Hub: {e}")
 
-# Load the trained pipeline
+# -----------------------------
+# Step 2: Load the trained pipeline
+# -----------------------------
 pipe = joblib.load(model_path)
 
-# ----------------------------
-# Step 2: Prediction function
-# ----------------------------
+# -----------------------------
+# Step 3: Prediction function
+# -----------------------------
 def predict_top_k(symptoms_text, duration_days, severity):
     row = {
         'symptoms_text': symptoms_text,
@@ -40,9 +48,9 @@ def predict_top_k(symptoms_text, duration_days, severity):
     idx = np.argsort(proba)[::-1][:3]
     return [{'disease': classes[i], 'probability': float(proba[i])} for i in idx]
 
-# ----------------------------
-# Step 3: Gradio Interface
-# ----------------------------
+# -----------------------------
+# Step 4: Gradio Interface
+# -----------------------------
 iface = gr.Interface(
     fn=predict_top_k,
     inputs=[
