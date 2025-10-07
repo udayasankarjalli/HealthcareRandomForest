@@ -54,7 +54,6 @@ jobs:
           git add .
           git commit -m "🤖 Auto-sync from GitHub $GITHUB_SHA" || echo "No changes to commit"
 
-
       - name: 📤 Push to Hugging Face
         run: |
           echo "🔹 Pushing latest changes to Hugging Face..."
