@@ -10,50 +10,57 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 🧩 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Train and save healthcare model
+      - name: 🧠 Train the healthcare model
         run: |
-          echo "🔹 Running training script..."
+          echo "Starting model training..."
           python train_model.py
-          echo "✅ Model training completed and saved to /model directory."
 
-      - name: Set up Git identity
+      - name: ⚙️ Set up Git identity
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Clone Hugging Face Space
+      - name: 🚀 Clone Hugging Face Space
         env:
           HF_USERNAME: "udaysankarjalli"
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_TOKEN: ${{ secrets.HG_HEALTHCAREDATA }}
           SPACE_NAME: "healthcare-disease-predictor"
         run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "❌ ERROR: Hugging Face token not found. Please add 'HG_HEALTHCAREDATA' secret in your repo settings."
+            exit 1
+          fi
           echo "🔹 Cloning Hugging Face Space..."
           git clone https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$SPACE_NAME hf-space
 
-      - name: Sync local repo → Hugging Face Space
+      - name: 🔄 Sync files to Hugging Face Space
         run: |
           echo "🔹 Syncing files to Hugging Face Space..."
-          rsync -av --delete --exclude='.git' ./ hf-space/ || true   # ✅ Ignore vanished files warning
+          rsync -av --delete --exclude='.git' ./ hf-space/
           cd hf-space
           git add .
-          git commit -m "Auto-sync from GitHub commit $GITHUB_SHA" || echo "No changes to commit."
+          git commit -m "🤖 Auto-sync from GitHub $GITHUB_SHA" || echo "No changes to commit"
 
-      - name: Push updated files to Hugging Face Space
+      - name: 📤 Push to Hugging Face
         run: |
-          cd hf-space
           echo "🔹 Pushing latest changes to Hugging Face..."
-          git push origin main
-          echo "✅ Successfully pushed to Hugging Face Space."
+          cd hf-space
+          git push origin main || { echo "❌ Push failed. Check your Hugging Face token permissions."; exit 1; }
+
+      - name: ✅ Summary
+        run: |
+          echo "🎉 Deployment completed successfully!"
+          echo "Your model and app are now live on Hugging Face: https://huggingface.co/spaces/udaysankarjalli/healthcare-disease-predictor"
