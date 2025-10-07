@@ -100,7 +100,7 @@ print(f"   Test   → {test_path}")
 # ----------------------------
 # Step 7: Upload model to Hugging Face Hub
 # ----------------------------
-HF_TOKEN = os.environ.get("HF_TOKEN")  # GitHub Action secret
+HF_TOKEN = os.environ.get("HG_HEALTHCAREDATA")   # GitHub Action secret
 REPO_ID = "udaysankarjalli/healthcare-disease-predictor-model"  # separate repo for large model files
 
 if HF_TOKEN:
