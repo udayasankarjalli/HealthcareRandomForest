@@ -1,0 +1,6 @@
+# Ignore model artifacts
+model/
+*.joblib
+*.pkl
+*.npy
+*.csv
