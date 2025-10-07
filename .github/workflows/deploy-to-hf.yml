@@ -46,19 +46,23 @@ jobs:
           echo "🔹 Cloning Hugging Face Space..."
           git clone https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$SPACE_NAME hf-space
 
+      
       - name: 🔄 Sync files to Hugging Face Space
         run: |
           echo "🔹 Syncing files to Hugging Face Space..."
-          rsync -av --delete --exclude='.git' ./ hf-space/ || [ $? -eq 24 ]
+          # Exclude .git and model folder
+          rsync -av --delete --exclude='.git' --exclude='model/' ./ hf-space/ || [ $? -eq 24 ]
           cd hf-space
           git add .
           git commit -m "🤖 Auto-sync from GitHub $GITHUB_SHA" || echo "No changes to commit"
+
 
       - name: 📤 Push to Hugging Face
         run: |
           echo "🔹 Pushing latest changes to Hugging Face..."
           cd hf-space
           git push origin main || { echo "❌ Push failed. Check your Hugging Face token permissions."; exit 1; }
+          
 
       - name: ✅ Summary
         run: |
